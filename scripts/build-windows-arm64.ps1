@@ -47,9 +47,16 @@ if (-not $fpcExe) {
   Say "Extracting FPC 3.2.2"
   New-Item -ItemType Directory -Force -Path C:\fpc | Out-Null
   tar.exe -xf $archive -C C:\fpc
-  $fpcExe = Get-ChildItem C:\fpc -Recurse -Include fpc.exe,ppcx64.exe -ErrorAction SilentlyContinue |
-    Sort-Object { $_.Name -ne "fpc.exe" } |
-    Select-Object -First 1 -ExpandProperty FullName
+  $inner = Get-ChildItem C:\fpc -Recurse -Filter "binary*.tar" | Select-Object -First 1
+  if ($inner) {
+    Say "Extracting $($inner.Name)"
+    New-Item -ItemType Directory -Force -Path C:\fpc\root | Out-Null
+    tar.exe -xf $inner.FullName -C C:\fpc\root
+  }
+  $fpcExe = @(
+    Get-ChildItem C:\fpc -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue
+    Get-ChildItem C:\fpc -Recurse -Filter ppcx64.exe -ErrorAction SilentlyContinue
+  ) | Select-Object -First 1 -ExpandProperty FullName
 }
 if (-not $fpcExe) {
   Get-ChildItem C:\fpc -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 30 |
