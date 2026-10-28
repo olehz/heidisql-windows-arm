@@ -39,24 +39,14 @@ if (Test-Path C:\fpc) {
 }
 if (-not $fpcExe) {
   Say "Downloading FPC 3.2.2 x64 bootstrap"
-  $installer = "C:\src\fpc-3.2.2.win32.and.win64.exe"
-  $urls = @(
-    "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.win32.and.win64.exe"
-  )
-  $ok = $false
-  foreach ($u in $urls) {
-    try {
-      Say "GET $u"
-      curl.exe -L --fail --retry 3 -A "Mozilla/5.0" -o $installer $u
-      if ((Test-Path $installer) -and ((Get-Item $installer).Length -gt 1MB)) { $ok = $true; break }
-    } catch {
-      Say "download failed: $($_.Exception.Message)"
-    }
-  }
-  if (-not $ok) { throw "Could not download the FPC 3.2.2 Windows installer" }
-  Say "Installing FPC 3.2.2"
-  $p = Start-Process -FilePath $installer -ArgumentList @("/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=C:\fpc") -Wait -PassThru
-  if ($p.ExitCode -ne 0) { throw "FPC installer exit code $($p.ExitCode)" }
+  $archive = "C:\src\fpc-3.2.2.x86_64-win64.tar"
+  $url = "https://downloads.freepascal.org/fpc/dist/3.2.2/x86_64-win64/fpc-3.2.2.x86_64-win64.tar"
+  Say "GET $url"
+  curl.exe -L --fail --retry 3 -o $archive $url
+  if ($LASTEXITCODE -ne 0) { throw "Could not download the FPC 3.2.2 Windows archive" }
+  Say "Extracting FPC 3.2.2"
+  New-Item -ItemType Directory -Force -Path C:\fpc | Out-Null
+  tar.exe -xf $archive -C C:\fpc
   $fpcExe = Get-ChildItem C:\fpc -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue |
     Where-Object { $_.FullName -match 'x86_64-win64' } | Select-Object -First 1 -ExpandProperty FullName
 }
