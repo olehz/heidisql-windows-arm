@@ -1,0 +1,34 @@
+name: windows-arm64
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    timeout-minutes: 150
+    steps:
+      - name: Checkout workflow
+        uses: actions/checkout@v4
+
+      - name: Checkout HeidiSQL lazarus branch
+        uses: actions/checkout@v4
+        with:
+          repository: HeidiSQL/HeidiSQL
+          ref: lazarus
+          path: heidisql
+
+      - name: Build Qt6 HeidiSQL for Windows ARM64
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-arm64.ps1
+
+      - name: Upload exe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: heidisql-windows-arm64
+          if-no-files-found: warn
+          path: |
+            heidisql/out/**/heidisql.exe
+            heidisql/out/**/heidisql*.exe
