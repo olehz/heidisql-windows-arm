@@ -81,18 +81,18 @@ if ($LASTEXITCODE -ne 0) { throw "FPC trunk build failed ($LASTEXITCODE)" }
 if ($LASTEXITCODE -ne 0) { throw "FPC crossinstall failed ($LASTEXITCODE)" }
 Pop-Location
 
-$pp = "C:\fpc-cross\lib\fpc\3.3.1\ppcrossa64.exe"
-if (-not (Test-Path $pp)) { throw "ppcrossa64.exe was not installed" }
+$pp = Get-ChildItem C:\fpc-cross,C:\src\fpc -Recurse -Filter ppcrossa64.exe -ErrorAction SilentlyContinue |
+  Select-Object -First 1 -ExpandProperty FullName
+if (-not $pp) { throw "ppcrossa64.exe was not installed" }
+$ppDir = Split-Path $pp -Parent
 @"
 -Twin64
 -Paarch64
--FuC:\fpc-cross\lib\fpc\3.3.1\units\`$fpctarget\*
+-FuC:\fpc-cross\units\`$fpctarget\*
 -FlC:\qt6pas\lib
 -XPaarch64-win64-
-"@ | Set-Content -Encoding ASCII "$pp.cfg" 
-# The compiler looks for fpc.cfg beside the binary, not ppcrossa64.cfg.
-Copy-Item "$pp.cfg" "C:\fpc-cross\lib\fpc\3.3.1\fpc.cfg" -Force
-Say "ppcrossa64 ready"
+"@ | Set-Content -Encoding ASCII (Join-Path $ppDir "fpc.cfg")
+Say "ppcrossa64: $pp"
 
 Say "Installing Qt 6 for Windows ARM64 (qtbase only)"
 python -m pip install --disable-pip-version-check aqtinstall
