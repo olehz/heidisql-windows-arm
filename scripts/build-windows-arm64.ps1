@@ -122,7 +122,7 @@ if (-not (Test-Path $vcvars)) { throw "vcvarsall.bat missing: $vcvars" }
 
 if (-not (Test-Path C:\src\lazarus\.git)) {
   Say "Cloning Lazarus fixes_4_8"
-  git clone --depth 1 --branch fixes_4_8 https://gitlab.com/freepascal.org/lazarus/lazarus.git C:\src\lazarus
+  git clone --depth 1 https://gitlab.com/freepascal.org/lazarus/lazarus.git C:\src\lazarus
 }
 $pro = "C:\src\lazarus\lcl\interfaces\qt6\cbindings\Qt6Pas.pro"
 if (-not (Test-Path $pro)) { throw "Qt6Pas.pro not found" }
