@@ -47,10 +47,15 @@ if (-not $fpcExe) {
   Say "Extracting FPC 3.2.2"
   New-Item -ItemType Directory -Force -Path C:\fpc | Out-Null
   tar.exe -xf $archive -C C:\fpc
-  $fpcExe = Get-ChildItem C:\fpc -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -match 'x86_64-win64' } | Select-Object -First 1 -ExpandProperty FullName
+  $fpcExe = Get-ChildItem C:\fpc -Recurse -Include fpc.exe,ppcx64.exe -ErrorAction SilentlyContinue |
+    Sort-Object { $_.Name -ne "fpc.exe" } |
+    Select-Object -First 1 -ExpandProperty FullName
 }
-if (-not $fpcExe) { throw "Bootstrap fpc.exe missing under C:\fpc" }
+if (-not $fpcExe) {
+  Get-ChildItem C:\fpc -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 30 |
+    ForEach-Object { Say $_.FullName }
+  throw "Bootstrap compiler missing under C:\fpc"
+}
 $env:PATH = (Split-Path $fpcExe -Parent) + ";" + $env:PATH
 & $fpcExe -iV -iTP -iTO
 
