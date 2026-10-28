@@ -127,6 +127,7 @@ if (-not (Test-Path C:\src\lazarus\.git)) {
 $pro = "C:\src\lazarus\lcl\interfaces\qt6\cbindings\Qt6Pas.pro"
 if (-not (Test-Path $pro)) { throw "Qt6Pas.pro not found" }
 
+(Get-Content $pro) -replace 'QMAKE_CXXFLAGS \+= -Wfatal-errors -fvisibility=hidden','' | Set-Content -Encoding ASCII $pro
 $qtBin = Split-Path $qmake.FullName -Parent
 $buildBat = "C:\src\build-qt6pas.bat"
 @"
@@ -134,8 +135,9 @@ $buildBat = "C:\src\build-qt6pas.bat"
 call "$vcvars" arm64
 if errorlevel 1 exit /b 1
 set PATH=$qtBin;%PATH%
+where cl
 cd /d C:\src\lazarus\lcl\interfaces\qt6\cbindings
-"$($qmake.FullName)" Qt6Pas.pro
+"$($qmake.FullName)" -spec win32-msvc Qt6Pas.pro
 if errorlevel 1 exit /b 1
 nmake
 if errorlevel 1 exit /b 1
