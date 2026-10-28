@@ -32,19 +32,22 @@ $env:PATH = "C:\tools\bin;" + $env:PATH
 
 # Bootstrap compiler. FPC 3.2.2 has no aarch64-win64 target; trunk does.
 # The x64 3.2.2 compiler runs under emulation and is only used to build trunk.
-$fpcExe = "C:\fpc\bin\x86_64-win64\fpc.exe"
-if (-not (Test-Path $fpcExe)) {
+$fpcExe = $null
+if (Test-Path C:\fpc) {
+  $fpcExe = Get-ChildItem C:\fpc -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -match 'x86_64-win64' } | Select-Object -First 1 -ExpandProperty FullName
+}
+if (-not $fpcExe) {
   Say "Downloading FPC 3.2.2 x64 bootstrap"
-  $installer = "C:\src\fpc-3.2.2.x86_64-win64.exe"
+  $installer = "C:\src\fpc-3.2.2.win32.and.win64.exe"
   $urls = @(
-    "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.x86_64-win64.exe",
-    "https://mirror.freedif.org/freepascal/fpc/dist/3.2.2/x86_64-win64/fpc-3.2.2.x86_64-win64.exe"
+    "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.win32.and.win64.exe"
   )
   $ok = $false
   foreach ($u in $urls) {
     try {
       Say "GET $u"
-      curl.exe -L --fail --retry 3 -o $installer $u
+      curl.exe -L --fail --retry 3 -A "Mozilla/5.0" -o $installer $u
       if ((Test-Path $installer) -and ((Get-Item $installer).Length -gt 1MB)) { $ok = $true; break }
     } catch {
       Say "download failed: $($_.Exception.Message)"
@@ -54,9 +57,11 @@ if (-not (Test-Path $fpcExe)) {
   Say "Installing FPC 3.2.2"
   $p = Start-Process -FilePath $installer -ArgumentList @("/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=C:\fpc") -Wait -PassThru
   if ($p.ExitCode -ne 0) { throw "FPC installer exit code $($p.ExitCode)" }
+  $fpcExe = Get-ChildItem C:\fpc -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -match 'x86_64-win64' } | Select-Object -First 1 -ExpandProperty FullName
 }
-if (-not (Test-Path $fpcExe)) { throw "Bootstrap fpc.exe missing at $fpcExe" }
-$env:PATH = "C:\fpc\bin\x86_64-win64;" + $env:PATH
+if (-not $fpcExe) { throw "Bootstrap fpc.exe missing under C:\fpc" }
+$env:PATH = (Split-Path $fpcExe -Parent) + ";" + $env:PATH
 & $fpcExe -iV -iTP -iTO
 
 Say "Cloning FPC trunk"
