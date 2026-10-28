@@ -52,6 +52,9 @@ if (-not $fpcExe) {
     Say "Extracting $($inner.Name)"
     New-Item -ItemType Directory -Force -Path C:\fpc\root | Out-Null
     tar.exe -xf $inner.FullName -C C:\fpc\root
+    Get-ChildItem C:\fpc\root -Filter *.tar.gz | ForEach-Object {
+      tar.exe -xf $_.FullName -C C:\fpc\root
+    }
   }
   $fpcExe = @(
     Get-ChildItem C:\fpc -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue
