@@ -96,14 +96,18 @@ Say "ppcrossa64: $pp"
 
 Say "Installing Qt 6 for Windows ARM64 (qtbase only)"
 python -m pip install --disable-pip-version-check aqtinstall
-Say "aqt hosts/targets:"
-python -m aqt list-qt windows_arm64
-$archList = python -m aqt list-qt windows_arm64 desktop --arch 6.8
-Say "aqt archs for 6.8: $archList"
-$arch = ($archList -split "\s+" | Where-Object { $_ -match "arm64" } | Select-Object -First 1)
-if (-not $arch) { throw "No ARM64 Qt architecture listed for windows_arm64 desktop 6.8. Output: $archList" }
+Say "aqt versions for windows_arm64 desktop:"
+$versions = @(python -m aqt list-qt windows_arm64 desktop)
+$versions | ForEach-Object { Say $_ }
+$ver = $versions | Where-Object { $_ -match '^\d+\.\d+\.\d+$' } | Sort-Object { [version]$_ } | Select-Object -Last 1
+if (-not $ver) { throw "aqt listed no Qt versions for windows_arm64 desktop" }
+Say "Using Qt $ver"
+$archList = @(python -m aqt list-qt windows_arm64 desktop --arch $ver)
+Say "aqt archs: $($archList -join ' ')"
+$arch = $archList | Where-Object { $_ -match 'arm64' } | Select-Object -First 1
+if (-not $arch) { throw "No ARM64 Qt architecture for windows_arm64 desktop $ver" }
 Say "Using Qt arch $arch"
-python -m aqt install-qt windows_arm64 desktop 6.8 $arch --outputdir C:\Qt
+python -m aqt install-qt windows_arm64 desktop $ver $arch --outputdir C:\Qt
 $qmake = Get-ChildItem C:\Qt -Recurse -Filter qmake.exe | Select-Object -First 1
 if (-not $qmake) { throw "qmake.exe not found under C:\Qt" }
 Say "qmake: $($qmake.FullName)"
